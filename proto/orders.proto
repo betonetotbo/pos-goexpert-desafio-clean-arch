@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "internal/pb";
+
+message Order {
+  string id = 1;
+}
+
+message OrderList {
+  repeated Order orders = 1;
+}
+
+message GetCategoryInput {
+  string id = 1;
+}
+
+service OrderService {
+  rpc ListOrders(google.protobuf.Empty) returns (OrderList) {}
+}
