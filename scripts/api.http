@@ -1,0 +1,21 @@
+# Listagem de orders
+GET http://localhost:8080/rest/orders
+
+###
+
+# Criação de Order
+POST http://localhost:8080/rest/orders
+Content-Type: application/json
+
+{
+  "customer":"Roberto",
+  "items":[{
+    "product":"RTX 4090 TI",
+    "price":1500,
+    "quantity":1
+  },{
+    "product":"Cabo USB 50m",
+    "price":12.5,
+    "quantity":2
+  }]
+}

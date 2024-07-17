@@ -74,6 +74,12 @@ autobind:
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
+  Order:
+    model:
+      - github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph/model.Order
+  OrderItem:
+    model:
+      - github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph/model.OrderItem
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID

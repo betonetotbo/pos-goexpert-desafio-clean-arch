@@ -3,21 +3,31 @@ syntax = "proto3";
 package pb;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "internal/pb";
 
 message Order {
   string id = 1;
+  string customer = 2;
+  google.protobuf.Timestamp date = 3;
+  double total = 4;
+  repeated OrderItem items = 5;
+}
+
+message OrderItem {
+  string id = 1;
+  string product = 2;
+  double price = 3;
+  int32 quantity = 4;
+  double total = 5;
 }
 
 message OrderList {
   repeated Order orders = 1;
 }
 
-message GetCategoryInput {
-  string id = 1;
-}
-
 service OrderService {
   rpc ListOrders(google.protobuf.Empty) returns (OrderList) {}
+  rpc CreateOrder(Order) returns (Order) {}
 }

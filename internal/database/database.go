@@ -1,11 +1,10 @@
 package database
 
 import (
-	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -13,32 +12,39 @@ type (
 	DBContextKeyValue string
 
 	Order struct {
-		ID       string `gorm:"primaryKey"`
-		Customer string
-		Date     time.Time
-		Products []Product `gorm:"many2many:order_products;"`
-		Total    float64
+		ID       string      `gorm:"size:191;index" json:"id"`
+		Customer string      `json:"customer"`
+		Date     time.Time   `json:"date"`
+		Items    []OrderItem `json:"items"`
+		Total    float64     `json:"total"`
 	}
-	Product struct {
-		ID          string `gorm:"primaryKey"`
-		Description string
-		Price       float64
+
+	OrderItem struct {
+		ID       string  `gorm:"size:191;primaryKey" json:"id"`
+		OrderID  string  `gorm:"size:191" json:"-"`
+		Order    Order   `json:"-"`
+		Product  string  `json:"product"`
+		Price    float64 `json:"price"`
+		Quantity int     `json:"quantity"`
+		Total    float64 `json:"total"`
 	}
 )
 
 var DBContextKey DBContextKeyValue = "db-context-key"
 
 func NewDB(host string, port int, user, password, database string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?multiStatements=true&charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, database)
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
 }
 
-func GetDB(ctx context.Context) *gorm.DB {
-	return ctx.Value(DBContextKey).(*gorm.DB)
+// Hooks
+
+func (o *Order) BeforeCreate(_ *gorm.DB) error {
+	o.ID = uuid.New().String()
+	return nil
 }
 
-func RunMigrations(ctx context.Context) error {
-	log.Println("Migrando o esquema da base de dados...")
-	db := GetDB(ctx)
-	return db.AutoMigrate(&Order{}, &Product{})
+func (i *OrderItem) BeforeCreate(_ *gorm.DB) error {
+	i.ID = uuid.New().String()
+	return nil
 }

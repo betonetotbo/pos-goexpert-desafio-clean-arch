@@ -22,7 +22,7 @@ var startCmd = &cobra.Command{
 		if e != nil {
 			return e
 		}
-		server.ListenAndServeHTTP(httpPort, grpcPort)
+		server.ListenAndServe(cmd.Context(), httpPort, grpcPort)
 		return nil
 	},
 }
@@ -30,5 +30,5 @@ var startCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(startCmd)
 	startCmd.Flags().IntP("port", "p", 8080, "Porta do servidor HTTP")
-	startCmd.Flags().IntP("grpc", "g", 50000, "Porta do servidor gRPC")
+	startCmd.Flags().IntP("grpc", "g", 50051, "Porta do servidor gRPC")
 }

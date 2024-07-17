@@ -6,26 +6,92 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
 
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph/model"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// CreateOrder is the resolver for the createOrder field.
+func (r *mutationResolver) CreateOrder(ctx context.Context, input model.NewOrder) (*model.Order, error) {
+	items := make([]*pb.OrderItem, len(input.Items))
+	for i, item := range input.Items {
+		items[i] = &pb.OrderItem{
+			Product:  item.Product,
+			Price:    item.Price,
+			Quantity: int32(item.Quantity),
+		}
+	}
+	order := &pb.Order{
+		Customer: input.Customer,
+		Items:    items,
+	}
+
+	var err error
+	order, err = r.Service.CreateOrder(ctx, order)
+	if err != nil {
+		return nil, err
+	}
+
+	ro := &model.Order{
+		ID:       order.Id,
+		Customer: order.Customer,
+		Date:     order.Date.String(),
+		Total:    order.Total,
+	}
+	return ro, nil
 }
 
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+// Items is the resolver for the items field.
+func (r *orderResolver) Items(ctx context.Context, obj *model.Order) ([]*model.OrderItem, error) {
+	var items []database.OrderItem
+	err := r.DB.Find(&items, "order_id = ?", obj.ID).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.OrderItem, len(items))
+	for i, item := range items {
+		result[i] = &model.OrderItem{
+			ID:       item.ID,
+			Product:  item.Product,
+			Price:    item.Price,
+			Quantity: item.Quantity,
+			Total:    item.Total,
+		}
+	}
+	return result, nil
+}
+
+// ListOrders is the resolver for the listOrders field.
+func (r *queryResolver) ListOrders(ctx context.Context) ([]*model.Order, error) {
+	var orders []database.Order
+	err := r.DB.Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Order, len(orders))
+	for i, o := range orders {
+		m := &model.Order{
+			ID:       o.ID,
+			Customer: o.Customer,
+			Date:     o.Date.String(),
+			Total:    o.Total,
+		}
+		result[i] = m
+	}
+	return result, nil
 }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// Order returns OrderResolver implementation.
+func (r *Resolver) Order() OrderResolver { return &orderResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
+type orderResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

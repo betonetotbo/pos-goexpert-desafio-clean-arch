@@ -6,6 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/rest"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/service"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"gorm.io/gorm"
 	"log"
 	"net"
 	"net/http"
@@ -22,12 +24,16 @@ import (
 	"time"
 )
 
-func ListenAndServeHTTP(httpPort, grpcPort int) {
+func ListenAndServe(ctx context.Context, httpPort, grpcPort int) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	configureRoutes(r)
+	db := ctx.Value(database.DBContextKey).(*gorm.DB)
+
+	ordersSvc := service.NewOrderService(db)
+
+	configureRoutes(r, ordersSvc, db)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", httpPort),
@@ -43,7 +49,7 @@ func ListenAndServeHTTP(httpPort, grpcPort int) {
 		}
 	}()
 
-	grpcServer := newGrpcServer()
+	grpcServer := newGrpcServer(ordersSvc)
 	go func() {
 		log.Printf("Servidor gRPC executando na porta %d...", grpcPort)
 		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
@@ -74,20 +80,21 @@ func ListenAndServeHTTP(httpPort, grpcPort int) {
 	log.Println("Servidores desligado")
 }
 
-func configureRoutes(router *chi.Mux) {
+func configureRoutes(router *chi.Mux, ordersSvc pb.OrderServiceServer, db *gorm.DB) {
 	// GraphQL
-	h := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	h := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Service: ordersSvc, DB: db}}))
 	router.Post("/graph/query", h.ServeHTTP)
 	router.Get("/graph", playground.Handler("GraphQL", "/graph/query"))
 
 	// REST
-	router.Get("/rest/orders", rest.ListOrdersHandler)
+	ordersHandler := rest.NewHandler(ordersSvc)
+	router.Get("/rest/orders", ordersHandler.ListOrdersHandler)
+	router.Post("/rest/orders", ordersHandler.CreateOrderHandler)
 }
 
-func newGrpcServer() *grpc.Server {
-	svc := service.NewOrderService()
+func newGrpcServer(ordersSvc pb.OrderServiceServer) *grpc.Server {
 	server := grpc.NewServer()
-	pb.RegisterOrderServiceServer(server, svc)
+	pb.RegisterOrderServiceServer(server, ordersSvc)
 	reflection.Register(server)
 	return server
 }
