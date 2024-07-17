@@ -36,7 +36,7 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.NewOrder
 	ro := &model.Order{
 		ID:       order.Id,
 		Customer: order.Customer,
-		Date:     order.Date.String(),
+		Date:     order.Date.AsTime().String(),
 		Total:    order.Total,
 	}
 	return ro, nil

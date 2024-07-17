@@ -57,6 +57,7 @@ Acesse a URL http://localhost:8080/graph (o playground do GraphQL).
 query ListOrders {
   listOrders {
     id
+    date
     customer
     total
     items {
@@ -82,6 +83,7 @@ mutation CreateOrder {
     ]
   }) {
     id
+    date
     customer
     total
     items {
