@@ -1,10 +1,10 @@
 # Listagem de orders
-GET http://localhost:8080/rest/orders
+GET http://localhost:8080/rest/order
 
 ###
 
 # Criação de Order
-POST http://localhost:8080/rest/orders
+POST http://localhost:8080/rest/order
 Content-Type: application/json
 
 {

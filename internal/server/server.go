@@ -88,8 +88,8 @@ func configureRoutes(router *chi.Mux, ordersSvc pb.OrderServiceServer, db *gorm.
 
 	// REST
 	ordersHandler := rest.NewHandler(ordersSvc)
-	router.Get("/rest/orders", ordersHandler.ListOrdersHandler)
-	router.Post("/rest/orders", ordersHandler.CreateOrderHandler)
+	router.Get("/rest/order", ordersHandler.ListOrdersHandler)
+	router.Post("/rest/order", ordersHandler.CreateOrderHandler)
 }
 
 func newGrpcServer(ordersSvc pb.OrderServiceServer) *grpc.Server {
