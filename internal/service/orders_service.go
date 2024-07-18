@@ -7,7 +7,6 @@ import (
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/transform"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 	"time"
 )
@@ -58,11 +57,14 @@ func (s *OrderService) CreateOrder(_ context.Context, in *pb.Order) (*pb.Order, 
 		total += item.Total
 	}
 	in.Total = total
-	in.Date = timestamppb.New(time.Now())
+	in.Date = time.Now().UTC().Format(time.RFC3339)
 
-	entity := transform.OrderToEntity(in)
+	entity, err := transform.OrderToEntity(in)
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.db.Create(entity).Error
+	err = s.db.Create(entity).Error
 	if err != nil {
 		return nil, err
 	}

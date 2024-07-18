@@ -3,7 +3,7 @@ package transform
 import (
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 func OrderToProtobuf(order *database.Order) *pb.Order {
@@ -14,7 +14,7 @@ func OrderToProtobuf(order *database.Order) *pb.Order {
 	return &pb.Order{
 		Id:       order.ID,
 		Customer: order.Customer,
-		Date:     timestamppb.New(order.Date),
+		Date:     order.Date.UTC().Format(time.UnixDate),
 		Total:    order.Total,
 		Items:    items,
 	}

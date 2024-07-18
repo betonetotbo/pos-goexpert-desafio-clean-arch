@@ -21,12 +21,11 @@ func RunMigrations(ctx context.Context) error {
 		return err
 	}
 
-	driver, _ := mysql.WithInstance(db, &mysql.Config{})
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations",
-		"mysql",
-		driver,
-	)
+	driver, err := mysql.WithInstance(db, &mysql.Config{})
+	if err != nil {
+		return err
+	}
+	m, err := migrate.NewWithDatabaseInstance("file://migrations", "mysql", driver)
 
 	if err != nil {
 		return err
