@@ -4,9 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -22,19 +19,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	host, _ := rootCmd.Flags().GetString("db-host")
-	port, _ := rootCmd.Flags().GetInt("db-port")
-	user, _ := rootCmd.Flags().GetString("db-user")
-	pass, _ := rootCmd.Flags().GetString("db-password")
-	dbName, _ := rootCmd.Flags().GetString("db-name")
-
-	db, err := database.NewDB(host, port, user, pass, dbName)
-	if err != nil {
-		log.Fatalf("Falha ao conectar ao banco de dados: %+v", err)
-	}
-	ctx := context.WithValue(context.Background(), database.DBContextKey, db)
-
-	err = rootCmd.ExecuteContext(ctx)
+	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -42,9 +27,9 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.Flags().String("db-host", "localhost", "MySQL server hostname")
-	rootCmd.Flags().Int("db-port", 3306, "MySQL server port")
-	rootCmd.Flags().String("db-name", "goexpert", "MySQL server database name")
-	rootCmd.Flags().String("db-user", "root", "MySQL server username")
-	rootCmd.Flags().String("db-password", "root", "MySQL server user password")
+	rootCmd.PersistentFlags().String("db-host", "localhost", "MySQL server hostname")
+	rootCmd.PersistentFlags().Int("db-port", 3306, "MySQL server port")
+	rootCmd.PersistentFlags().String("db-name", "goexpert", "MySQL server database name")
+	rootCmd.PersistentFlags().String("db-user", "root", "MySQL server username")
+	rootCmd.PersistentFlags().String("db-password", "root", "MySQL server user password")
 }

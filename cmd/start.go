@@ -4,15 +4,17 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/server"
 	"github.com/spf13/cobra"
 )
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Inicia a aplicação",
-	Long:  `Inicia a aplicação levantando o servidor HTTP`,
+	Use:    "start",
+	Short:  "Inicia a aplicação",
+	Long:   `Inicia a aplicação levantando o servidor HTTP`,
+	PreRun: database.PrepareDatabase,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		httpPort, e := cmd.Flags().GetInt("port")
 		if e != nil {

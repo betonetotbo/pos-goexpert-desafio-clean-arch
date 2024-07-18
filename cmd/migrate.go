@@ -10,9 +10,10 @@ import (
 
 // migrateCmd represents the migrate command
 var migrateCmd = &cobra.Command{
-	Use:   "migrate",
-	Short: "Faz a migração da base de dados",
-	Long:  `Faz a migração da base de dados criando as tabelas necessárias`,
+	Use:    "migrate",
+	Short:  "Faz a migração da base de dados",
+	Long:   `Faz a migração da base de dados criando as tabelas necessárias`,
+	PreRun: database.PrepareDatabase,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return database.RunMigrations(cmd.Context())
 	},
