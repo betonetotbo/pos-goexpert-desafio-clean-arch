@@ -6,10 +6,9 @@ package graph
 
 import (
 	"context"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph/model"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
-
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph/model"
 )
 
 // CreateOrder is the resolver for the createOrder field.
@@ -36,7 +35,7 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.NewOrder
 	ro := &model.Order{
 		ID:       order.Id,
 		Customer: order.Customer,
-		Date:     order.Date.AsTime().String(),
+		Date:     order.Date,
 		Total:    order.Total,
 	}
 	return ro, nil
