@@ -21,6 +21,8 @@ go run . migrate
 
 Este comando irá conectar-se ao MySQL e criar as tabelas da aplicação.
 
+> Para demais parâmetros (ex.: informar endereço do mysql) execute `go run . help migrate`  
+
 ## Executando a aplicação
 
 Para executar a aplicação:
@@ -34,6 +36,7 @@ Isso fará com que a aplicação inicie, então 2 servidores irão estar dispon�
   * No path `/graph`, estão os endpoints relacionados ao GraphQL
 * Porta 50051 - servidor gRPC
 
+> Para demais parâmetros (ex.: informar endereço do mysql ou trocar a porta HTTP) execute `go run . help start`
 
 ## Testando HTTP Rest
 
