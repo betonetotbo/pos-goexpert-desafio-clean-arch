@@ -2,18 +2,12 @@
 
 package model
 
+type CreateOrderInput struct {
+	Price float64 `json:"price"`
+	Tax   float64 `json:"tax"`
+}
+
 type Mutation struct {
-}
-
-type NewOrder struct {
-	Customer string          `json:"customer"`
-	Items    []*NewOrderItem `json:"items"`
-}
-
-type NewOrderItem struct {
-	Product  string  `json:"product"`
-	Price    float64 `json:"price"`
-	Quantity int     `json:"quantity"`
 }
 
 type Query struct {

@@ -1,8 +1,7 @@
 package graph
 
 import (
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
-	"gorm.io/gorm"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/usecase"
 )
 
 // This file will not be regenerated automatically.
@@ -10,6 +9,6 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Service pb.OrderServiceServer
-	DB      *gorm.DB
+	CreateOrderUC *usecase.CreateOrderUseCase
+	ListOrdersUC  *usecase.ListOrdersUseCase
 }

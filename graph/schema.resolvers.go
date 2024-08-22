@@ -6,78 +6,47 @@ package graph
 
 import (
 	"context"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/usecase"
+	"math"
+
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph/model"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
 )
 
 // CreateOrder is the resolver for the createOrder field.
-func (r *mutationResolver) CreateOrder(ctx context.Context, input model.NewOrder) (*model.Order, error) {
-	items := make([]*pb.OrderItem, len(input.Items))
-	for i, item := range input.Items {
-		items[i] = &pb.OrderItem{
-			Product:  item.Product,
-			Price:    item.Price,
-			Quantity: int32(item.Quantity),
-		}
-	}
-	order := &pb.Order{
-		Customer: input.Customer,
-		Items:    items,
-	}
-
-	var err error
-	order, err = r.Service.CreateOrder(ctx, order)
+func (r *mutationResolver) CreateOrder(ctx context.Context, input model.CreateOrderInput) (*model.Order, error) {
+	order, err := r.CreateOrderUC.Execute(&usecase.CreateOrderInputDTO{
+		Price: input.Price,
+		Tax:   input.Tax,
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	ro := &model.Order{
-		ID:       order.Id,
-		Customer: order.Customer,
-		Date:     order.Date,
-		Total:    order.Total,
-	}
-	return ro, nil
-}
-
-// Items is the resolver for the items field.
-func (r *orderResolver) Items(ctx context.Context, obj *model.Order) ([]*model.OrderItem, error) {
-	var items []database.OrderItem
-	err := r.DB.Find(&items, "order_id = ?", obj.ID).Error
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*model.OrderItem, len(items))
-	for i, item := range items {
-		result[i] = &model.OrderItem{
-			ID:       item.ID,
-			Product:  item.Product,
-			Price:    item.Price,
-			Quantity: item.Quantity,
-			Total:    item.Total,
-		}
-	}
-	return result, nil
+	return &model.Order{
+		ID:         order.ID,
+		Price:      order.Price,
+		Tax:        order.Tax,
+		FinalPrice: order.FinalPrice,
+	}, nil
 }
 
 // ListOrders is the resolver for the listOrders field.
 func (r *queryResolver) ListOrders(ctx context.Context) ([]*model.Order, error) {
-	var orders []database.Order
-	err := r.DB.Find(&orders).Error
+	list, err := r.ListOrdersUC.Execute(&usecase.ListOrdersInputDTO{
+		Limit:  math.MaxInt32,
+		Offset: 0,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*model.Order, len(orders))
-	for i, o := range orders {
-		m := &model.Order{
-			ID:       o.ID,
-			Customer: o.Customer,
-			Date:     o.Date.String(),
-			Total:    o.Total,
+	result := make([]*model.Order, len(list.Orders))
+	for i, order := range list.Orders {
+		result[i] = &model.Order{
+			ID:         order.ID,
+			Price:      order.Price,
+			Tax:        order.Tax,
+			FinalPrice: order.FinalPrice,
 		}
-		result[i] = m
 	}
 	return result, nil
 }
@@ -85,12 +54,8 @@ func (r *queryResolver) ListOrders(ctx context.Context) ([]*model.Order, error) 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
-// Order returns OrderResolver implementation.
-func (r *Resolver) Order() OrderResolver { return &orderResolver{r} }
-
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
-type orderResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

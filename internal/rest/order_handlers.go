@@ -1,9 +1,10 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
-	"log"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/usecase"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/utils"
 	"net/http"
 )
 
@@ -14,34 +15,46 @@ type (
 	}
 
 	orderHandlersImpl struct {
-		service pb.OrderServiceServer
+		create *usecase.CreateOrderUseCase
+		list   *usecase.ListOrdersUseCase
 	}
 )
 
-func NewHandler(service pb.OrderServiceServer) OrderHandlers {
-	return &orderHandlersImpl{service: service}
+func NewHandler(ctx context.Context) OrderHandlers {
+	return &orderHandlersImpl{
+		create: usecase.NewCreateOrderUseCase(ctx),
+		list:   usecase.NewListOrdersUseCase(ctx),
+	}
 }
 
 func (h *orderHandlersImpl) ListOrdersHandler(w http.ResponseWriter, r *http.Request) {
-	orders, err := h.service.ListOrders(r.Context(), nil)
+	orders, err := h.list.Execute(&usecase.ListOrdersInputDTO{
+		Limit:  int32(utils.GetQueryParamInt(r, "limit", 10)),
+		Offset: int32(utils.GetQueryParamInt(r, "offset", 0)),
+	})
 	if err != nil {
-		log.Fatalf("Error while listing orders: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
 	json.NewEncoder(w).Encode(&orders.Orders)
 }
 
 func (h *orderHandlersImpl) CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
-	order := &pb.Order{}
-	err := json.NewDecoder(r.Body).Decode(&order)
+	var in usecase.CreateOrderInputDTO
+	err := json.NewDecoder(r.Body).Decode(&in)
 	if err != nil {
-		log.Fatalf("Failed to decode request body: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	order, err = h.service.CreateOrder(r.Context(), order)
+	order, err := h.create.Execute(&in)
 	if err != nil {
-		log.Fatalf("Failed to create order: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
+
 	json.NewEncoder(w).Encode(&order)
 }

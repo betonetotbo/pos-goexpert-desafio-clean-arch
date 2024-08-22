@@ -2,31 +2,37 @@ syntax = "proto3";
 
 package pb;
 
-import "google/protobuf/empty.proto";
-
 option go_package = "internal/pb";
+
+message CreateOrderRequest {
+  double price = 1;
+  double tax = 2;
+}
+
+message CreateOrderResponse {
+  string id = 1;
+  double price = 2;
+  double tax = 3;
+  double final_price = 4;
+}
+
+message ListOrdersRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
 
 message Order {
   string id = 1;
-  string customer = 2;
-  string date = 3;
-  double total = 4;
-  repeated OrderItem items = 5;
+  double price = 2;
+  double tax = 3;
+  double final_price = 4;
 }
 
-message OrderItem {
-  string id = 1;
-  string product = 2;
-  double price = 3;
-  int32 quantity = 4;
-  double total = 5;
-}
-
-message OrderList {
+message ListOrdersResponse {
   repeated Order orders = 1;
 }
 
 service OrderService {
-  rpc ListOrders(google.protobuf.Empty) returns (OrderList) {}
-  rpc CreateOrder(Order) returns (Order) {}
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {}
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse) {}
 }

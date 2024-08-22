@@ -6,15 +6,14 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/graph"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/rest"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/service"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gorm.io/gorm"
 	"log"
 	"net"
 	"net/http"
@@ -29,11 +28,7 @@ func ListenAndServe(ctx context.Context, httpPort, grpcPort int) {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	db := ctx.Value(database.DBContextKey).(*gorm.DB)
-
-	ordersSvc := service.NewOrderService(db)
-
-	configureRoutes(r, ordersSvc, db)
+	configureRoutes(ctx, r)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", httpPort),
@@ -49,6 +44,7 @@ func ListenAndServe(ctx context.Context, httpPort, grpcPort int) {
 		}
 	}()
 
+	ordersSvc := service.NewOrderService(ctx)
 	grpcServer := newGrpcServer(ordersSvc)
 	go func() {
 		log.Printf("Servidor gRPC executando na porta %d...", grpcPort)
@@ -80,14 +76,17 @@ func ListenAndServe(ctx context.Context, httpPort, grpcPort int) {
 	log.Println("Servidores desligado")
 }
 
-func configureRoutes(router *chi.Mux, ordersSvc pb.OrderServiceServer, db *gorm.DB) {
+func configureRoutes(ctx context.Context, router *chi.Mux) {
 	// GraphQL
-	h := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Service: ordersSvc, DB: db}}))
+	h := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+		CreateOrderUC: usecase.NewCreateOrderUseCase(ctx),
+		ListOrdersUC:  usecase.NewListOrdersUseCase(ctx),
+	}}))
 	router.Post("/graph/query", h.ServeHTTP)
 	router.Get("/graph", playground.Handler("GraphQL", "/graph/query"))
 
 	// REST
-	ordersHandler := rest.NewHandler(ordersSvc)
+	ordersHandler := rest.NewHandler(ctx)
 	router.Get("/rest/order", ordersHandler.ListOrdersHandler)
 	router.Post("/rest/order", ordersHandler.CreateOrderHandler)
 }

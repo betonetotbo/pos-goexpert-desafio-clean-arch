@@ -2,78 +2,59 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/database"
 	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/pb"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/transform"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"gorm.io/gorm"
-	"time"
+	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/internal/usecase"
 )
 
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
-	db *gorm.DB
+	createOrders *usecase.CreateOrderUseCase
+	listOrders   *usecase.ListOrdersUseCase
 }
 
-func NewOrderService(db *gorm.DB) *OrderService {
+func NewOrderService(ctx context.Context) *OrderService {
 	return &OrderService{
-		db: db,
+		createOrders: usecase.NewCreateOrderUseCase(ctx),
+		listOrders:   usecase.NewListOrdersUseCase(ctx),
 	}
 }
 
-func (s *OrderService) ListOrders(_ context.Context, in *emptypb.Empty) (*pb.OrderList, error) {
-	var orders []database.Order
-	err := s.db.Preload("Items").Find(&orders).Error
+func (s *OrderService) ListOrders(_ context.Context, in *pb.ListOrdersRequest) (*pb.ListOrdersResponse, error) {
+	list, err := s.listOrders.Execute(&usecase.ListOrdersInputDTO{
+		Limit:  in.Limit,
+		Offset: in.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	dtos := make([]*pb.Order, len(orders))
-	for i, order := range orders {
-		dtos[i] = transform.OrderToProtobuf(&order)
+	dtos := make([]*pb.Order, len(list.Orders))
+	for i, order := range list.Orders {
+		dtos[i] = &pb.Order{
+			Id:         order.ID,
+			Price:      order.Price,
+			Tax:        order.Tax,
+			FinalPrice: order.FinalPrice,
+		}
 	}
 
-	return &pb.OrderList{
+	return &pb.ListOrdersResponse{
 		Orders: dtos,
 	}, nil
 }
 
-func (s *OrderService) CreateOrder(_ context.Context, in *pb.Order) (*pb.Order, error) {
-	if len(in.Items) == 0 {
-		return nil, fmt.Errorf("É necessário informar um ou mais 'items'")
-	}
-
-	var total = 0.0
-	for i, item := range in.Items {
-		if item.Price <= 0.0 {
-			return nil, fmt.Errorf("O item (%d / %s) não possui 'price' válido: %v", i+1, item.Product, item.Price)
-		}
-		if item.Quantity <= 0 {
-			return nil, fmt.Errorf("O item (%d / %s)não possui 'quantity' válida: %v", i+1, item.Product, item.Quantity)
-		}
-
-		item.Total = item.Price * float64(item.Quantity)
-		total += item.Total
-	}
-	in.Total = total
-	in.Date = time.Now().UTC().Format(time.RFC3339)
-
-	entity, err := transform.OrderToEntity(in)
+func (s *OrderService) CreateOrder(_ context.Context, in *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
+	order, err := s.createOrders.Execute(&usecase.CreateOrderInputDTO{
+		Price: in.Price,
+		Tax:   in.Tax,
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	err = s.db.Create(entity).Error
-	if err != nil {
-		return nil, err
-	}
-
-	in.Id = entity.ID
-	for i, item := range in.Items {
-		item.Id = entity.Items[i].ID
-		item.Total = entity.Total
-	}
-
-	return in, nil
+	return &pb.CreateOrderResponse{
+		Id:         order.ID,
+		Price:      order.Price,
+		Tax:        order.Tax,
+		FinalPrice: order.FinalPrice,
+	}, nil
 }

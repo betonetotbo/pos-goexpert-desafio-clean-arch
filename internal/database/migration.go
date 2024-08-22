@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"gorm.io/gorm"
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -14,12 +13,7 @@ import (
 func RunMigrations(ctx context.Context) error {
 	log.Println("Migrando o esquema da base de dados...")
 
-	g := ctx.Value(DBContextKey).(*gorm.DB)
-
-	db, err := g.DB()
-	if err != nil {
-		return err
-	}
+	db := GetDB(ctx)
 
 	driver, err := mysql.WithInstance(db, &mysql.Config{})
 	if err != nil {
