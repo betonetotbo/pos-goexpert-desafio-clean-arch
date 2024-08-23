@@ -19,7 +19,7 @@ func RunMigrations(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://migrations", "mysql", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://sql/migrations", "mysql", driver)
 
 	if err != nil {
 		return err

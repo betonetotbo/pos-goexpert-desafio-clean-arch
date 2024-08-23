@@ -8,14 +8,17 @@ POST http://localhost:8080/rest/order
 Content-Type: application/json
 
 {
-  "customer":"Roberto",
-  "items":[{
-    "product":"RTX 4090 TI",
-    "price":1500,
-    "quantity":1
-  },{
-    "product":"Cabo USB 50m",
-    "price":12.5,
-    "quantity":2
-  }]
+  "price": 10.5,
+  "tax": 1.25
+}
+
+###
+
+# Criação de Order com erro
+POST http://localhost:8080/rest/order
+Content-Type: application/json
+
+{
+"price": 0,
+"tax": 1.25
 }

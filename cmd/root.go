@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"context"
-	"github.com/betonetotbo/pos-goexpert-desafio-clean-arch/config"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,10 +12,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:     "pos-goexpert-desafio-clean-arch",
-	Short:   "Clean Architecture",
-	Long:    `Desafio sobre clean architecture da PÓS gradução go-expert.`,
-	PreRunE: config.LoadConfig,
+	Use:   "pos-goexpert-desafio-clean-arch",
+	Short: "Clean Architecture",
+	Long:  `Desafio sobre clean architecture da PÓS gradução go-expert.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

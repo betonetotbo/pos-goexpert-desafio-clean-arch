@@ -1,11 +1,30 @@
 # Desafio - Clean Architecture
 
+## Detalhes da Implementação
+
+- O aplicativo executa utilizando o cobra-cli.
+  - As migrações são aplicadas pelo aplicativo via argumento `migrate`.
+  - Para iniciar a aplicação use o argumento `start`.
+- O servidor HTTP é o mesmo compartilhado entre os endpoints REST e GraphQL.
+- O servidor gRPC roda em outra porta.
+- As dependências são mantidas e compartilhadas por um `Value` em um `context.Context` que é configurado na 
+  inicialização do cobra-cli. Instâncias como: 
+  - A instância do `sql.DB`
+  - A instância do `config.Configuration`
+- A camada de persistência (repository) possui uma implementação utilizando o `sqlc`.
+- A camada de negócios (entity e usecase) são compartilhados no REST, GraphQL e gRPC.
+
+## Configurações
+
+As configurações da aplicação estão no arquivo `.env` na raiz do projeto.
+Todos os comandos a seguir devem ser executados dentro da raiz do projeto.
+
 ## Iniciando o banco de dados
 
 Primeiro é necessário iniciar a composição docker com a base de dados:
 
 ```bash
-cd deployments
+cd docker
 docker compose up -d
 ```
 
@@ -13,21 +32,19 @@ Isso fará com que um servidor MySQL inicie na porta 3306 localmente.
 
 ## Criando a base de dados
 
-Na primeira vez que você executar a aplicação, é necessário executar antes a migração.
+Na primeira vez que você executar a aplicação, é necessário executar as migrações.
 
 ```bash
-go run . migrate
+go run main.go migrate
 ```
 
 Este comando irá conectar-se ao MySQL e criar as tabelas da aplicação.
-
-> Para demais parâmetros (ex.: informar endereço do mysql) execute `go run . help migrate`  
 
 ## Executando a aplicação
 
 Para executar a aplicação:
 ```bash
-go run . start
+go run main.go start
 ```
 
 Isso fará com que a aplicação inicie, então 2 servidores irão estar disponíveis:
@@ -56,46 +73,24 @@ Alguns exemplos de comandos para utilizar dentro do client evans:
 Acesse a URL http://localhost:8080/graph (o playground do GraphQL).
 
 ```graphql
-# Listagem das Orders
 query ListOrders {
   listOrders {
     id
-    date
-    customer
-    total
-    items {
-      id
-      product
-      price
-      quantity
-      total
-    }
+    price
+    tax
+    finalPrice
   }
 }
 
-# Mutation para criação de uma Order
 mutation CreateOrder {
   createOrder(input: {
-    customer: "Roberto Neto"
-    items: [
-      {
-        product:"Produto 1"
-        price:10.5
-        quantity:2
-      }
-    ]
+    price: 10.4
+    tax: 1.99
   }) {
     id
-    date
-    customer
-    total
-    items {
-      id
-      product
-      price
-      quantity
-      total
-    }
+    price
+    tax
+    finalPrice
   }
 }
 ```

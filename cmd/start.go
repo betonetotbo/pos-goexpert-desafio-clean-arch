@@ -17,6 +17,7 @@ var startCmd = &cobra.Command{
 	Short: "Inicia a aplicação",
 	Long:  `Inicia a aplicação levantando o servidor HTTP`,
 	PreRunE: utils.MultiRun(
+		config.LoadConfig,
 		database.PrepareDatabase,
 	),
 	RunE: func(cmd *cobra.Command, args []string) error {
